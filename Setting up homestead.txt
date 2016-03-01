@@ -1,0 +1,195 @@
+					Below are instructions to install homestead and laravel:
+
+	1. Install vagrant and virtualbox.
+   	Vagrant: https://www.vagrantup.com/
+   	Virtualbox: https://www.virtualbox.org/
+
+	2. clone homestead into a dir:
+	git clone https://github.com/laravel/homestead.git Homestead
+
+	3. Add path to your environmental variables. 
+
+	4. Create a .yaml file in your .homestead directory: bash init.sh
+
+	Note: When we are setting up our site we need to use the homestead.yaml file. Once we have it set up we don't
+	need to worry about anything else.
+
+	Note: The first thing that is important is in the .yaml file:
+	"
+	authorize: ~/.ssh/id_rsa.pub
+
+	keys:
+    	- ~/.ssh/id_rsa
+
+	"
+	Note: If you don't have an ssh key set up you need to generate one using the foloowing command.
+      	You use your email address for C.
+
+      	But for us we have a general key already when we installed homestead. id_rsa.pub and key id_rsa.
+      	These are important when needing access to the server. Especially important with laravel for using the 
+      	command line and generally poking around.
+
+	5. We now come to the interesting part. Configuring our folders and our sites:
+	"
+	folders:
+    	- map: ~/Code
+      	to: /home/vagrant/Code
+
+	sites:
+    	- map: homestead.app
+      	to: /home/vagrant/Code/Laravel/public
+	"
+
+	Note: The folder section allows us to specify what folders we want to keep in sync with our virtual machine.
+	Remember we are creating files on our localmachine which is being synched with our virtual machine which 
+    	has our web server and all of our other services and then we cans see them in the browser. Basically this area 
+    	of our configuration lets us easily keep everything in sync with our virtual machine.
+
+	6. Inside www create a folder called sites and inside here will be all of our projects.sites. 
+	7. We change the .yaml file to:
+	"
+	folders:
+    	- map: ~/www/sites
+     	to: /home/vagrant/sites
+	"
+
+	Note: This is done so that anything that is done in the ww/sites folder will be synced to the vagrant/sites folder.
+
+	8. Now we come down to the sites section in .yaml.
+	This is for our url bar. We tell it when we write in tests.app in the browser map it to the folder sites/tests.
+	sites:
+	"
+	- map: tests.app
+	to: /home/vagrant/sites/tests
+	"
+
+	Note: Be extremely careful when adding new folders to be mapped from. Laravel can be sensitive to any change in format. An unexpected space tab etc.
+
+	9. Now we need to launch our machine. We go over to our main homestead directory.  Where the vagrant file lives. 
+	example: c/www/homestead.
+
+	10. We use the command: vagrant up
+
+	Note: This will start up our machine. We need to run this command evertime we restart our computer.
+
+	Note: Here are some error I have come across when running vagrant up and the fixes:
+	If you get an error:
+	C:/www/Homestead/scripts/homestead.rb:106:in read': No such file or directory @ rb_sysopen - C:/Users/Niall/.ssh/id_rsa (Errno::ENOENT)
+	
+	Then it means that you need to generate an SSH key. 
+	Input this: ssh-keygen -t rsa -C "nialloc9@gmail.com"
+	When it prompts you for where to save the key just hit enter. Passphrase is also optional, just hit enter twice for a blank passphrase.
+
+	If you do this and you get an error like:
+	'ssh' is not recognized as an internal or external command,
+	operable program or batch file
+
+	It's probaly because your not using git bash. Install git bash and do again.
+
+	If you get:
+	vm:
+	* The host path of the shared folder is missing: ~/www/sites
+
+	Then it means the folder is missing. This is probaly because you have 
+	~/www/sites ->This is for mac not windows. Use below for windows.
+
+	Instead use c:www.sites as the map for the folders in homestead.yaml.
+
+
+	Explanation of vagrant up action:
+
+	If you look at the part that says:
+	default: Forwarding ports...
+    	default: 80 (guest) => 8000 (host) (adapter 1)
+    	default: 443 (guest) => 44300 (host) (adapter 1)
+    	default: 3306 (guest) => 33060 (host) (adapter 1)
+    	default: 5432 (guest) => 54320 (host) (adapter 1)
+    	default: 22 (guest) => 2222 (host) (adapter 1)
+
+	You can see that the ports are being forwarded. This is really important so we know where to connect to.
+	port 80 is our server that has been forwared to port 8000. This is our machine. Our X engine.
+	However for us acccessing it on our local machine it will be at port 8000. It is the same for the others like 
+	mysql which is found at port 3306 but for us at 33060 using localhost. These are usually the only ones we are interested in
+	but we have ssh (22) and https(443).
+
+	Now we can actually go to test.app:8000 which is app.test at port 8000. This actually won't work now so we have to
+	add test.app and any other sites we have to our host file on our machine. This is so we know where we are pointing test.app to.
+	We can do this in the terminal using sudo code but I would suggest going to the hosts file as instructed below.
+
+	Edit host file:
+	Edit hosts file on \Windows\System32\drivers\etc folder and add this line to the end:
+	127.0.0.1  test.app
+
+	This is basically just saying that when this is typed into the url we are running on localhost.
+	Because we are mapping the site directory in www with the .homestead it will automatically sync any 
+	changes to the project with the machine and change fast.
+
+
+						Installing Laravel:
+
+	1. Install laravel globally using composer.
+
+	2. The problem with doing this is normally the commands used on the commandline would be local. We 
+	want to be doing this in our machine environment. So in your terminal go your folder with your vagrant file in it. 
+	Example: c:www/homestead
+
+	4. Input into the terminal: vagrant ssh
+
+	This ssh's us into our machine. 
+	If you look at the directories here we can see our sites dir here. This is the dir that has been syncing from our local machine to
+	our virtual machine.
+	
+	5. Now we need to install laravel on our virtual environment. 
+	   Input into terminal: composer global require "laravel/installer=~1.1"
+
+	Notes: If you see:
+
+	You are running composer with xdebug enabled. This has a major impact on runtime performance. See https://getcomposer.org/xdebug
+	Don't worry it's just saying you are using xdebug. This takes alot of cpu power but is used for phpunit.
+
+	8. Then we make it the root user with command: sudo su
+
+	9. Next we add the PATH variable using: export PATH="$PATH:~/.composer/vendor/bin" command.
+
+	10. We restart then using the command: source ~/.bashrc
+
+	11. Then run laravel new tutorial to create a new laravel application and to check that it is working. Remember we must change the .yaml file.
+
+	12. Now we need to add theis to the .yaml file so we can access it in the browser.
+	    Go to the yaml file at users/niall/.homestead
+
+	13. Under sites we are going to create a new site. We do this by mapping tutorial.app to the folder where it is stored in the vagrant 
+	environment. We must add public to the path as the files to be displayed are stored there when using laravel. But for any non laravel
+	projects we can just give the route.
+	"
+	- map: tutorial.app
+	  
+  	to: /home/vagrant/sites/tutorial/public
+	"
+
+	14. Now we need to edit our hosts file by going to our hosts file at:
+	Edit hosts file on \Windows\System32\drivers\etc 
+	Add in the url name.
+
+	15. Now we need to reprovision our machine. This just means restarting everything.
+	What we do it in the virtual environment gitbash for vagrant type: exit
+
+	Note: This should bring you back to c/www/homestead
+
+	16. Now use command vagrant provision
+
+	Note: This will update the site information.
+
+
+	Note: If it is not changing to laravel 5 logo. Go to hosts file and make sure that the new site name and ip are added.
+	Also check that the .yaml file is updated correctly. 
+	Rememeber that the new site must be in the sites folder in the vagrant environment.
+	Each time you change the .yaml or hosts file provision vagrant again.
+
+
+	Note: Remember that the sql port is 33060 for when you are making your database.
+
+	Enjoy Laravel. ^_^
+
+
+
